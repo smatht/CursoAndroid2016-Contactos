@@ -9,6 +9,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
@@ -25,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private final String nombreArchivo = "contactos.json";
     private Spinner filtro;
     private List<Contacto> listaContactos;
+    private List<Contacto> listaFiltrada;
+    private int filtroSelected = 0;
     private ListView list;
     private MostrarContactoAdapter adapter;
 
@@ -63,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Gson gson = new Gson();
         Type tipoListaContactos = new TypeToken<List<Contacto>>(){}.getType();
         this.listaContactos = gson.fromJson(contactosJson, tipoListaContactos);
+        this.listaFiltrada = gson.fromJson(contactosJson, tipoListaContactos);
 
 //        assertNotNull(this.listaContactos);
 //        assertEquals(5,this.listaContactos.size());
@@ -114,17 +119,72 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         adtFiltro.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         this.filtro.setAdapter(adtFiltro);
 
-        adapter=new MostrarContactoAdapter(this, listaContactos);
+        adapter=new MostrarContactoAdapter(this, listaFiltrada);
         list.setAdapter(adapter);
     }
 
     private void addListeners() {
         this.filtro.setOnItemSelectedListener(this);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                /////////////////////////////////////////////////////////////////////////////
+                // Si el elemento clickeado no esta seleccionado lo selecciona,
+                // caso contrario lo deselecciona.
+                /////////////////////////////////////////////////////////////////////////////
+                for (int i = 0; i < list.getChildCount(); i++) {
+                    if(position == i ){
+                        if (list.getChildAt(position).getTag() == null) {
+                            list.getChildAt(position).setBackground(getResources().getDrawable(
+                                    R.drawable.gradient_bg_hover));
+                            list.getChildAt(position).setTag(R.drawable.gradient_bg_hover);
+                        }
+                        else
+                        {
+                            list.getChildAt(position).setBackground(getResources().getDrawable(
+                                    R.drawable.gradient_bg));
+                            list.getChildAt(position).setTag(null);
+                        }
+                    }else{
+                        list.getChildAt(i).setBackground(getResources().getDrawable(
+                                R.drawable.gradient_bg));
+                        list.getChildAt(i).setTag(null);
+                    }
+
+                }
+
+            }
+        });
+        list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Toast.makeText(MainActivity.this, listaFiltrada.get(i).toString(),
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
+        });
     }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        reloadData(i);
+    }
 
+    private void reloadData(int filtro) {
+        listaFiltrada = new ArrayList<Contacto>();
+        for (Contacto c : this.listaContactos) {
+            if (filtro == 0) {
+                listaFiltrada.addAll(this.listaContactos);
+                break;
+            }
+            else
+            if (c.getGrupo() == filtro)
+                listaFiltrada.add(c);
+        }
+        this.adapter.getData().clear();
+        this.adapter.getData().addAll(listaFiltrada);
+        this.adapter.notifyDataSetChanged();
     }
 
     @Override
