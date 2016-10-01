@@ -1,28 +1,111 @@
 package sticchi.matias.practico6;
 
+import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Spinner;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
+    private final String nombreArchivo = "contactos.json";
     private Spinner filtro;
+    private List<Contacto> listaContactos;
+    private ListView list;
+    private MostrarContactoAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        createFile();
         addWidgets();
+        readContacts();
         addListeners();
         addAdapters();
     }
 
+    private void readContacts() {
+        try
+        {
+            BufferedReader fin =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    openFileInput(nombreArchivo)));
+
+            String texto = fin.readLine();
+            fin.close();
+
+            deserializarContactosJson(texto);
+        }
+        catch (Exception ex)
+        {
+            Log.e("Ficheros", "Error al leer fichero desde memoria interna");
+        }
+    }
+
+    private void deserializarContactosJson(String contactosJson) {
+        Gson gson = new Gson();
+        Type tipoListaContactos = new TypeToken<List<Contacto>>(){}.getType();
+        this.listaContactos = gson.fromJson(contactosJson, tipoListaContactos);
+
+//        assertNotNull(this.listaContactos);
+//        assertEquals(5,this.listaContactos.size());
+    }
+
+    private void createFile() {
+        File f;
+        Gson gson = new Gson();
+        try
+        {
+            f = new File(nombreArchivo);
+            if (f.exists())
+                System.out.println("///////////////////////////////////////////////////////////\n" +
+                        "El fichero existe\n" +
+                        "//////////////////////////////////////////////////////////////////////\n");
+            else {
+                System.out.println("/////////////////////////////////////////////////////////////\n" +
+                        "Pues va a ser que no\n" +
+                        "/////////////////////////////////////////////////////////////////////////\n");
+                final Contacto c1 = new Contacto("Miguel", "Alvarez","1234567898", "Amigos");
+                final Contacto c2 = new Contacto("Marcelo", "Revel", "666666666", "Amigos");
+                final Contacto c3 = new Contacto("Florencia", "Perez", "3794568978", "Familia");
+                final Contacto c4 = new Contacto("Rolando", "Larania", "707070707070");
+                final Contacto c5 = new Contacto("Matias", "Sticchi", "379-4589388", "Familia");
+
+                final String json = "[" + gson.toJson(c1) + "," + gson.toJson(c2) + "," +
+                        gson.toJson(c3) + "," + gson.toJson(c4) + "," + gson.toJson(c5) + "]";
+
+                OutputStreamWriter fileJson= new OutputStreamWriter(
+                        openFileOutput(nombreArchivo, Context.MODE_PRIVATE));
+                fileJson.write(json);
+                fileJson.close();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.e("Ficheros", "Algun error por aji");
+        }
+    }
+
     private void addWidgets() {
         this.filtro = (Spinner) findViewById(R.id.spinner);
+        this.list=(ListView)findViewById(R.id.list);
     }
 
     private void addAdapters() {
@@ -30,6 +113,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 this, R.array.filtro, android.R.layout.simple_spinner_item);
         adtFiltro.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         this.filtro.setAdapter(adtFiltro);
+
+        adapter=new MostrarContactoAdapter(this, listaContactos);
+        list.setAdapter(adapter);
     }
 
     private void addListeners() {
