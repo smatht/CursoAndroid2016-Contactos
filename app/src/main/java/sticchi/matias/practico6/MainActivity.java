@@ -1,9 +1,14 @@
 package sticchi.matias.practico6;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -42,6 +47,69 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         readContacts();
         addListeners();
         addAdapters();
+        addContextMenu();
+    }
+
+    private void addContextMenu() {
+        registerForContextMenu(list);
+    }
+
+    // TODO: 9/30/2016
+    // FIXME: 9/30/2016
+    ///////////////////////////////////////////////////////////////////////////
+    // Error: El titulo del cuadro de menu no coloca correctamente el nombre
+    // del contacto cuando la lista se filtra (por familia por ej).
+    ///////////////////////////////////////////////////////////////////////////
+    // FIXED: 9/30/2016
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+                                    ContextMenu.ContextMenuInfo menuInfo)
+    {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        MenuInflater inflater = getMenuInflater();
+//        inflater.inflate(R.menu.menu_ctx, menu);
+        AdapterView.AdapterContextMenuInfo info =
+                (AdapterView.AdapterContextMenuInfo)menuInfo;
+
+        int contactoID = Integer.parseInt(list.getAdapter().getItem(info.position).toString());
+        Contacto c = listaFiltrada.get(contactoID);
+
+        menu.setHeaderTitle(c.getNombre()+" "+c.getApellido());
+
+        inflater.inflate(R.menu.menu_ctx, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+
+        AdapterView.AdapterContextMenuInfo info =
+                (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        int contactoID = Integer.parseInt(list.getAdapter().getItem(info.position).toString());
+        Contacto c = listaFiltrada.get(contactoID);
+
+        switch (item.getItemId()) {
+            case R.id.CtxOpc1:
+                String uri = "tel:"+c.getTelefono();
+                call(uri);
+                return true;
+            case R.id.CtxOpc2:
+                Toast.makeText(MainActivity.this, c.toString(), Toast.LENGTH_LONG).show();
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
+    private void call(String uri) {
+        Intent in=new Intent(Intent.ACTION_CALL, Uri.parse(uri));
+        try{
+            startActivity(in);
+        }
+
+        catch (android.content.ActivityNotFoundException ex){
+            Toast.makeText(getApplicationContext(),"No se puede realizar la llamada",Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void readContacts() {
@@ -154,14 +222,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
                 }
 
-            }
-        });
-        list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(MainActivity.this, listaFiltrada.get(i).toString(),
-                        Toast.LENGTH_LONG).show();
-                return false;
             }
         });
     }
