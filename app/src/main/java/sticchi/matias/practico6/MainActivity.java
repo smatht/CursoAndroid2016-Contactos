@@ -1,12 +1,15 @@
 package sticchi.matias.practico6;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -29,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+    private final Context context = this;
 
     private final String nombreArchivo = "contactos.json";
     private Spinner filtro;
@@ -55,7 +59,28 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_add:
-                Toast.makeText(MainActivity.this, "Funcion no implementada", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "Funcion no implementada", Toast.LENGTH_SHORT).show();
+                LayoutInflater li = LayoutInflater.from(context);
+                View addContactView = li.inflate(R.layout.new_contact, null);
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                        context);
+                alertDialogBuilder.setView(addContactView);
+                alertDialogBuilder
+                        .setCancelable(false)
+                        .setPositiveButton("OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog,int id) {
+
+                                    }
+                                })
+                        .setNegativeButton("Cancel",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.cancel();
+                                    }
+                                });
+                alertDialogBuilder.create();
+                alertDialogBuilder.show();
                 return true;
             case R.id.menu_close:
                 finish();
